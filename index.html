@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Real-Time Chat App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* CSS styles remain the same */
+        :root {
+            --primary-color: #6a11cb; --secondary-color: #2575fc; --background-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); --text-color: #333; --light-text-color: #f8f9fa; --card-bg: #ffffff; --shadow: 0 4px 15px rgba(0, 0, 0, 0.1); --border-radius: 10px; --font-family: 'Poppins', sans-serif; --error-color: #e74c3c; --success-color: #2ecc71; --message-sent-bg: linear-gradient(to right, #e0c3fc, #8ec5fc); --message-received-bg: #e9ecef; --modal-bg: #fff; --body-bg-color: #f0f2f5; --container-bg-color: var(--card-bg); --header-bg: var(--background-gradient); --header-text-color: var(--light-text-color); --messages-bg-color: #f8f9fa; --input-form-bg: #fff; --input-border-color: #ddd; --profile-text-color: #444; --online-indicator-color: #2ecc71; --button-edit-color: #3498db; --button-save-color: #2ecc71; --button-delete-color: #e74c3c; --modal-overlay-bg: rgba(0, 0, 0, 0.5); --edited-color: #777; --button-copy-color: #f39c12; --button-leave-color: #e67e22; --list-hover-bg: #f1f1f1;
+        }
+        body.dark-theme {
+            --primary-color: #7e3ff2; --secondary-color: #4a8fff; --background-gradient: linear-gradient(135deg, #23272a 0%, #2c2f33 100%); --text-color: #e0e0e0; --light-text-color: #e0e0e0; --card-bg: #36393f; --shadow: 0 4px 15px rgba(0, 0, 0, 0.3); --body-bg-color: #212121; --container-bg-color: var(--card-bg); --header-bg: linear-gradient(135deg, #23272a 0%, #2c2f33 100%); --header-text-color: #e0e0e0; --messages-bg-color: #32353b; --input-form-bg: #40444b; --input-border-color: #555; --modal-bg: #2f3136; --profile-text-color: #ccc; --online-indicator-color: #43b581; --button-edit-color: #5faeff; --button-save-color: #43b581; --button-delete-color: #f04747; --modal-overlay-bg: rgba(0, 0, 0, 0.7); --edited-color: #aaa; --message-received-bg: #40444b; --button-copy-color: #f1c40f; --button-leave-color: #f39c12; --list-hover-bg: #3a3d42;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 16px; }
+        body { font-family: var(--font-family); background: var(--body-bg-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--text-color); overflow: hidden; transition: background-color 0.3s ease; }
+        .container { width: 95%; max-width: 1000px; height: 90vh; max-height: 800px; background-color: var(--container-bg-color); border-radius: var(--border-radius); box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; position: relative; transition: background-color 0.3s ease; }
+        #auth-container { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px; height: 100%; background: var(--background-gradient); color: var(--light-text-color); animation: fadeIn 0.5s ease-in-out; transition: background 0.3s ease; }
+        .auth-box { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 30px 40px; border-radius: var(--border-radius); box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37); border: 1px solid rgba(255, 255, 255, 0.18); width: 100%; max-width: 400px; text-align: center; }
+        body.dark-theme .auth-box { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); }
+        #auth-container h2 { margin-bottom: 25px; font-weight: 600; font-size: 2rem; }
+        .auth-form { display: flex; flex-direction: column; gap: 18px; }
+        .input-group { position: relative; }
+        .auth-form input { width: 100%; padding: 12px 15px 12px 40px; border: none; border-radius: 5px; background-color: rgba(255, 255, 255, 0.8); color: #333; font-size: 1rem; transition: background-color 0.3s ease; }
+        body.dark-theme .auth-form input { background-color: rgba(255, 255, 255, 0.15); color: var(--light-text-color); }
+        .auth-form input:focus { outline: none; background-color: #fff; box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.2); }
+        body.dark-theme .auth-form input:focus { background-color: rgba(255, 255, 255, 0.25); box-shadow: 0 0 0 2px rgba(126, 63, 242, 0.3); }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--primary-color); font-size: 0.9rem; }
+        body.dark-theme .input-group i { color: var(--secondary-color); }
+        .auth-form button { padding: 12px; background: var(--background-gradient); color: var(--light-text-color); border: none; border-radius: 5px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease; margin-top: 10px; }
+        .auth-form button:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
+        .toggle-auth { margin-top: 20px; font-size: 0.9rem; }
+        .toggle-auth button { background: none; border: none; color: var(--light-text-color); font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0 5px; font-size: 0.9rem; }
+        #auth-error, #auth-success { color: #fff; background-color: rgba(231, 76, 60, 0.8); padding: 10px; border-radius: 5px; margin-top: 15px; font-size: 0.9rem; display: none; text-align: center; }
+        #auth-success { background-color: rgba(46, 204, 113, 0.8); }
+        body.dark-theme #auth-error { background-color: rgba(240, 71, 71, 0.8); } body.dark-theme #auth-success { background-color: rgba(39, 174, 96, 0.8); }
+        #signup-form { display: none; }
+        #chat-container { display: none; flex-direction: column; height: 100%; animation: fadeIn 0.5s ease-in-out; position: relative; overflow: hidden; }
+        .chat-header { background: var(--header-bg); color: var(--header-text-color); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.2); flex-shrink: 0; transition: background 0.3s ease, color 0.3s ease; }
+        body.dark-theme .chat-header { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .chat-header-left { display: flex; align-items: center; gap: 10px; overflow: hidden; flex-shrink: 1; min-width: 0; }
+        #profile-toggle-btn, #joined-rooms-btn { background: none; border: none; color: var(--header-text-color); font-size: 1.4rem; cursor: pointer; padding: 5px; line-height: 1; transition: opacity 0.2s ease; flex-shrink: 0; }
+        #profile-toggle-btn:hover, #joined-rooms-btn:hover { opacity: 0.8; }
+        #chat-room-title { font-size: 1.2rem; font-weight: 600; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+         #chat-room-title:hover { text-decoration: underline; }
+        .chat-header-center { display: flex; justify-content: center; align-items: center; flex-grow: 1; gap: 15px; }
+        #join-room-btn { background: none; border: none; color: var(--header-text-color); font-size: 1.4rem; cursor: pointer; padding: 5px; line-height: 1; transition: opacity 0.2s ease; }
+        #join-room-btn:hover { opacity: 0.8; }
+        .chat-header-right { display: flex; align-items: center; gap: 15px; flex-shrink: 0; }
+        #online-count { font-size: 0.9rem; font-weight: 600; color: var(--online-indicator-color); }
+        #messages { flex-grow: 1; overflow-y: auto; padding: 20px; background-color: var(--messages-bg-color); display: flex; flex-direction: column; gap: 5px; transition: background-color 0.3s ease; }
+        #messages::-webkit-scrollbar { width: 8px; } #messages::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 10px; } body.dark-theme #messages::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); } #messages::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; } body.dark-theme #messages::-webkit-scrollbar-thumb { background: #555; } #messages::-webkit-scrollbar-thumb:hover { background: #aaa; } body.dark-theme #messages::-webkit-scrollbar-thumb:hover { background: #777; }
+        .message { display: flex; flex-direction: column; max-width: 70%; padding: 8px 12px; border-radius: var(--border-radius); animation: messageFadeIn 0.3s ease-out; transition: background-color 0.3s ease, color 0.3s ease; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.05); margin-bottom: 10px; }
+        .message .message-content { display: flex; flex-direction: column; }
+        .message .user { font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--primary-color); } body.dark-theme .message .user { color: var(--secondary-color); }
+        .message .text { font-size: 0.95rem; line-height: 1.4; word-wrap: break-word; }
+        .message .text a { color: var(--secondary-color); text-decoration: underline; } body.dark-theme .message .text a { color: var(--primary-color); }
+        .message .timestamp { font-size: 0.7rem; color: #999; margin-top: 3px; text-align: right; } body.dark-theme .message .timestamp { color: #777; }
+        .message.sent { align-self: flex-end; background: var(--message-sent-bg); border-bottom-right-radius: 0; color: #333; }
+        .message.received { align-self: flex-start; background-color: var(--message-received-bg); border-bottom-left-radius: 0; }
+        body.dark-theme .message.sent { color: #eee; box-shadow: 0 1px 1px rgba(0,0,0,0.1); } body.dark-theme .message.received { background-color: var(--message-received-bg); color: var(--light-text-color); box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+        .message .edited-indicator { font-size: 0.65rem; color: var(--edited-color); margin-left: 5px; font-style: italic; }
+        .message-actions { position: absolute; top: 2px; right: 5px; display: none; gap: 5px; background-color: rgba(255, 255, 255, 0.8); padding: 2px 4px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); z-index: 1; }
+        .message.sent:hover .message-actions { display: flex; } body.dark-theme .message-actions { background-color: rgba(40, 40, 40, 0.9); }
+        .message-actions button { background: none; border: none; cursor: pointer; font-size: 0.75rem; padding: 2px; line-height: 1; transition: opacity 0.2s; }
+        .edit-msg-btn { color: var(--button-edit-color); } .delete-msg-btn { color: var(--button-delete-color); } .message-actions button:hover { opacity: 0.7; }
+        .message-edit-form { display: flex; gap: 5px; margin-top: 5px; }
+        .message-edit-form input[type="text"] { flex-grow: 1; padding: 5px 8px; border: 1px solid var(--input-border-color); border-radius: 4px; font-size: 0.9rem; background-color: var(--input-form-bg); color: var(--text-color); }
+        .message-edit-form button { padding: 5px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
+        .save-edit-btn { background-color: var(--button-save-color); color: white; } .cancel-edit-btn { background-color: #ccc; color: #333; } body.dark-theme .cancel-edit-btn { background-color: #555; color: white; }
+        #message-form { display: flex; padding: 15px 20px; border-top: 1px solid var(--input-border-color); background-color: var(--input-form-bg); flex-shrink: 0; transition: background-color 0.3s ease, border-color 0.3s ease; align-items: flex-end; }
+        #message-input { flex-grow: 1; padding: 12px 15px; border: 1px solid var(--input-border-color); border-radius: 20px; margin-right: 10px; font-size: 1rem; resize: none; max-height: 100px; overflow-y: auto; background-color: var(--input-form-bg); color: var(--text-color); transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease; }
+        #message-input::placeholder { color: #aaa; } body.dark-theme #message-input::placeholder { color: #777; }
+        #message-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(106,17,203,0.2); } body.dark-theme #message-input:focus { box-shadow: 0 0 0 2px rgba(126, 63, 242, 0.3); }
+        #message-form button#send-button { background: var(--background-gradient); border: none; color: white; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; transition: transform 0.2s ease, background 0.3s ease, opacity 0.2s ease; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        #message-form button#send-button:hover { transform: scale(1.05); }
+        #message-form button#send-button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; background: #ccc; } body.dark-theme #message-form button#send-button:disabled { background: #555; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--modal-overlay-bg); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s linear 0.3s; }
+        .modal-overlay.open { opacity: 1; visibility: visible; transition: opacity 0.3s ease; }
+        .modal-content { background-color: var(--modal-bg); color: var(--profile-text-color); padding: 0; border-radius: var(--border-radius); box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2); width: 90%; max-width: 500px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; transform: scale(0.95); transition: transform 0.3s ease; }
+        .modal-overlay.open .modal-content { transform: scale(1); }
+        .modal-header { padding: 15px 25px; border-bottom: 1px solid var(--input-border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .modal-header h3 { font-size: 1.4rem; margin: 0; }
+        .modal-close-btn { background: none; border: none; font-size: 1.6rem; cursor: pointer; color: var(--profile-text-color); padding: 5px; line-height: 1; } .modal-close-btn:hover { opacity: 0.7; }
+        .modal-body { padding: 25px; overflow-y: auto; flex-grow: 1; }
+        .modal-footer { padding: 20px 25px; border-top: 1px solid var(--input-border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; flex-shrink: 0; }
+        .modal-footer button { padding: 12px 18px; font-size: 0.95rem; border-radius: 5px; cursor: pointer; border: none; transition: opacity 0.2s ease; } .modal-footer button:hover { opacity: 0.9; }
+        .modal-list { list-style: none; padding: 0; margin: 0; max-height: 40vh; overflow-y: auto; }
+        .modal-list li { padding: 12px 15px; border-bottom: 1px solid var(--input-border-color); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background-color 0.2s ease; }
+        .modal-list li:last-child { border-bottom: none; }
+        .modal-list li:hover { background-color: var(--list-hover-bg); }
+        .modal-list .item-name { font-weight: 600; flex-grow: 1; margin-right: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .modal-list .item-id { font-size: 0.8rem; color: #888; margin-left: 10px; white-space: nowrap; }
+        body.dark-theme .modal-list .item-id { color: #aaa; }
+        .modal-list button { background: none; border: none; cursor: pointer; font-size: 0.9rem; padding: 4px 8px; margin-left: 10px; border-radius: 4px; line-height: 1; flex-shrink: 0; }
+        .leave-room-btn { color: var(--button-leave-color); } .leave-room-btn:hover { opacity: 0.7; }
+        #profile-modal-content .profile-info { position: relative; } /* Added for positioning message */
+        #profile-modal-content .profile-info p { margin-bottom: 15px; font-size: 0.95rem; display: flex; align-items: flex-start; gap: 8px; word-break: break-word; transition: background-color 0.3s ease, border 0.3s ease; padding: 5px; border: 2px solid transparent; border-radius: 5px; } /* Added transition, padding, border */
+        #profile-modal-content .profile-info strong { font-weight: 600; flex-shrink: 0; min-width: 60px; } #profile-modal-content .username-display { display: flex; align-items: center; gap: 8px; flex-grow: 1; } #profile-modal-content .username-display span { flex-grow: 1; word-break: break-all; } #profile-modal-content .edit-username-btn { background: none; border: none; color: var(--button-edit-color); cursor: pointer; font-size: 0.9em; padding: 0 0 0 5px; flex-shrink: 0; line-height: 1; } #profile-modal-content .edit-username-btn:hover { opacity: 0.8; } #profile-modal-content .username-edit-form { display: none; align-items: center; gap: 8px; width: 100%; margin-top: 5px; } #profile-modal-content .username-edit-form input { flex-grow: 1; padding: 6px 10px; border: 1px solid var(--input-border-color); border-radius: 4px; font-size: 0.9rem; background-color: var(--input-form-bg); color: var(--text-color); } #profile-modal-content .username-edit-form input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.1); } body.dark-theme #profile-modal-content .username-edit-form input:focus { box-shadow: 0 0 0 2px rgba(126, 63, 242, 0.2); } #profile-modal-content .save-username-btn { background: none; border: none; color: var(--button-save-color); cursor: pointer; font-size: 1.2em; padding: 2px 5px; flex-shrink: 0; } #profile-modal-content .save-username-btn:hover { opacity: 0.8; } #profile-modal-content #username-edit-error { color: var(--error-color); font-size: 0.8rem; margin-top: 5px; display: none; } #profile-modal-content .profile-settings { margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--input-border-color); } #profile-modal-content .profile-settings h4 { font-size: 1.1rem; margin-bottom: 15px; } #profile-modal-content .setting-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; } #profile-modal-content .setting-item label { font-size: 0.95rem; margin-right: 10px; } #profile-modal-content .switch { position: relative; display: inline-block; width: 50px; height: 26px; flex-shrink: 0; } #profile-modal-content .switch input { opacity: 0; width: 0; height: 0; } #profile-modal-content .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 26px; } #profile-modal-content .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; } #profile-modal-content input:checked + .slider { background-color: var(--primary-color); } #profile-modal-content input:focus + .slider { box-shadow: 0 0 1px var(--primary-color); } #profile-modal-content input:checked + .slider:before { transform: translateX(24px); }
+        #profile-modal-content .modal-footer { justify-content: flex-end; } #profile-modal-content .modal-footer button#logout-btn { background: var(--background-gradient); color: var(--light-text-color); }
+        /* Highlighting for username prompt */
+        #profile-modal-content .profile-info p.highlight-username { animation: highlight-pulse 1.5s 2; border: 2px solid var(--primary-color); margin-bottom: 13px !important; /* Adjust for border */ }
+        @keyframes highlight-pulse { 0%, 100% { background-color: rgba(106, 17, 203, 0); } 50% { background-color: rgba(106, 17, 203, 0.15); } }
+        body.dark-theme #profile-modal-content .profile-info p.highlight-username { border-color: var(--secondary-color); animation-name: highlight-pulse-dark; }
+        @keyframes highlight-pulse-dark { 0%, 100% { background-color: rgba(74, 143, 255, 0); } 50% { background-color: rgba(74, 143, 255, 0.2); } }
+        /* Guidance message style */
+        .username-guidance-message { background-color: var(--message-received-bg); color: var(--text-color); padding: 10px 15px; border-radius: 5px; margin-bottom: 15px; font-size: 0.9rem; text-align: center; border: 1px solid var(--input-border-color); }
+        body.dark-theme .username-guidance-message { background-color: var(--message-received-bg); color: var(--light-text-color); border-color: var(--input-border-color); }
+        #room-modal-content .form-group, #joined-rooms-modal .form-group, #participants-modal .form-group { margin-bottom: 20px; }
+        #room-modal-content label, #joined-rooms-modal label, #participants-modal label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 1rem; }
+        #room-modal-content input[type="text"] { width: 100%; padding: 10px 14px; border: 1px solid var(--input-border-color); border-radius: 5px; font-size: 1rem; background-color: var(--input-form-bg); color: var(--text-color); }
+        #room-modal-content input[type="text"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.1); } body.dark-theme #room-modal-content input[type="text"]:focus { box-shadow: 0 0 0 2px rgba(126, 63, 242, 0.2); }
+        #room-modal-content #create-room-submit-btn, #room-modal-content #join-room-submit-btn { width: 100%; margin-bottom: 15px; padding: 12px; font-size: 1rem; }
+        #room-modal-content #new-room-id-display { margin-top: 15px; padding: 12px 15px; background-color: var(--messages-bg-color); border: 1px dashed var(--input-border-color); border-radius: 5px; font-size: 0.95rem; word-break: break-all; text-align: center; display: flex; align-items: center; justify-content: space-between; }
+        #room-modal-content #new-room-id-display strong { margin-right: 10px; font-size: 1.1em; }
+        #room-modal-content #copy-room-id-btn { background: var(--button-copy-color); color: white; padding: 6px 10px; font-size: 0.9rem; border: none; border-radius: 4px; cursor: pointer; flex-shrink: 0; }
+        #room-modal-content hr { margin: 25px 0; border: none; border-top: 1px solid var(--input-border-color); opacity: 0.5; }
+        #room-modal-content .modal-footer button { flex-basis: calc(50% - 10px); }
+        #room-modal-content button#create-room-submit-btn { background-color: var(--success-color); color: white; width: 100%; margin-bottom: 10px; }
+        #room-modal-content button#join-room-submit-btn { background-color: var(--primary-color); color: white; width: 100%; }
+        #room-modal-content button#delete-room-btn { background-color: var(--error-color); color: white; }
+        #room-modal-content button#switch-global-btn { background-color: var(--secondary-color); color: white; }
+        #room-modal-content button:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; } body.dark-theme #room-modal-content button:disabled { background-color: #555; }
+        #joined-rooms-modal .modal-body, #participants-modal .modal-body { padding: 10px 0 0 0; }
+        #participants-modal .modal-list li { cursor: default; } #participants-modal .modal-list li:hover { background-color: transparent; } body.dark-theme #participants-modal .modal-list li:hover { background-color: transparent; }
+        /* Removed Set Username Modal Styles */
+        .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255,255,255,0.85); display: flex; justify-content: center; align-items: center; z-index: 1100; font-size: 1.2rem; color: var(--primary-color); text-align: center; padding: 20px; transition: background-color 0.3s ease, color 0.3s ease, opacity 0.3s ease; opacity: 1; pointer-events: auto; } body.dark-theme .loading-overlay { background-color: rgba(0,0,0,0.8); color: var(--light-text-color); } .loading-overlay.hidden { opacity: 0; pointer-events: none; } .loading-overlay i { animation: spin 1s linear infinite; margin-right: 10px; font-size: 1.5em; }
+        @keyframes fadeIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} } @keyframes messageFadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} } @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+        .hidden { display: none !important; }
+        @media (max-width: 768px) { .container { width: 100%; height: 100vh; border-radius: 0; max-height: none; } #auth-container { padding: 20px; } .auth-box { padding: 25px 20px; max-width: 90%; } #auth-container h2 { font-size: 1.8rem; } .chat-header { padding: 10px 15px; } #chat-room-title { font-size: 1.1rem; } #online-count { font-size: 0.85rem; } #messages { padding: 15px; } .message { max-width: 85%; } #message-form { padding: 10px 15px; } #message-input { padding: 10px 15px; font-size: 0.95rem; } #message-form button#send-button { width: 40px; height: 40px; font-size: 1.1rem; } .modal-content { max-width: 90%; } .modal-header h3 { font-size: 1.2rem; } .modal-close-btn { font-size: 1.3rem; } .modal-footer button { padding: 10px 15px; font-size: 0.9rem; flex-basis: 100%; } }
+        @media (max-width: 480px) { html { font-size: 15px; } .auth-box { padding: 20px 15px; } #auth-container h2 { font-size: 1.6rem; } .auth-form { gap: 15px; } .chat-header { gap: 5px; padding: 8px 10px; } #chat-room-title { font-size: 1.0rem; } #profile-toggle-btn, #join-room-btn, #joined-rooms-btn { font-size: 1.2rem; padding: 4px; } #online-count { font-size: 0.8rem; } #messages { padding: 10px; } .message { max-width: 90%; padding: 6px 10px; margin-bottom: 8px; } .message .user { font-size: 0.75rem; } .message .text { font-size: 0.9rem; } .message .timestamp { font-size: 0.65rem; } #message-input { font-size: 0.9rem; max-height: 80px; } #message-form button#send-button { width: 38px; height: 38px; font-size: 1rem; } .modal-header { padding: 12px 15px; } .modal-body { padding: 15px; } .modal-footer { padding: 12px 15px; } #profile-modal-content .profile-info p { font-size: 0.9rem; } #profile-modal-content .username-edit-form input { font-size: 0.85rem;} #room-modal-content label { font-size: 0.9rem; } #room-modal-content input[type="text"] { padding: 8px 12px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="loading-overlay hidden" id="loading-indicator"></div>
+
+        <!-- Auth Screen -->
+        <div id="auth-container" style="display: flex;">
+            <div class="auth-box">
+                <h2 id="auth-title">Welcome Back!</h2>
+                <form id="login-form" class="auth-form" style="display: flex;"><div class="input-group"><i class="fas fa-envelope"></i><input type="email" id="login-email" placeholder="Email" required></div><div class="input-group"><i class="fas fa-lock"></i><input type="password" id="login-password" placeholder="Password" required></div><button type="submit">Login</button></form>
+                <form id="signup-form" class="auth-form" style="display: none;"><div class="input-group"><i class="fas fa-envelope"></i><input type="email" id="signup-email" placeholder="Email" required></div><div class="input-group"><i class="fas fa-lock"></i><input type="password" id="signup-password" placeholder="Password (min 6)" minlength="6" required></div><button type="submit">Sign Up</button></form>
+                <div id="auth-error"></div><div id="auth-success"></div>
+                <div class="toggle-auth"><span id="toggle-text">No account?</span><button id="toggle-button">Sign Up</button></div>
+            </div>
+        </div>
+
+        <!-- Set Username Modal REMOVED -->
+
+        <!-- Profile Modal -->
+        <div class="modal-overlay" id="profile-modal-overlay">
+            <div class="modal-content" id="profile-modal-content">
+                <div class="modal-header"><h3>Profile & Settings</h3><button id="profile-close-btn" class="modal-close-btn" title="Close"><i class="fas fa-times"></i></button></div>
+                <div class="modal-body">
+                    <!-- Placeholder for username guidance message -->
+                    <div id="username-guidance-placeholder"></div>
+                    <div class="profile-info">
+                        <p id="profile-username-p"> <!-- Added ID for easier selection -->
+                           <strong>Username:</strong>
+                           <span class="username-display">
+                               <span id="profile-username">...</span>
+                               <button class="edit-username-btn" title="Edit"><i class="fas fa-pencil-alt"></i></button>
+                           </span>
+                           <div class="username-edit-form">
+                               <input type="text" id="username-edit-input" placeholder="New username (letters, numbers, _)">
+                               <button class="save-username-btn" title="Save"><i class="fas fa-check"></i></button>
+                           </div>
+                           <div id="username-edit-error"></div>
+                        </p>
+                        <p><strong>Email:</strong><span id="profile-email">...</span></p>
+                    </div>
+                    <div class="profile-settings">
+                        <h4>Settings</h4>
+                        <div class="setting-item">
+                            <label for="theme-toggle">Dark Theme</label>
+                            <label class="switch">
+                                <input type="checkbox" id="theme-toggle">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer"><button id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button></div>
+            </div>
+        </div>
+
+        <!-- Room Management Modal -->
+        <div class="modal-overlay" id="room-modal-overlay">
+            <div class="modal-content" id="room-modal-content">
+                <div class="modal-header"><h3>Manage Rooms</h3><button id="room-close-btn" class="modal-close-btn" title="Close"><i class="fas fa-times"></i></button></div>
+                <div class="modal-body">
+                    <div class="form-group"><label for="create-room-name">Create New Room</label><input type="text" id="create-room-name" placeholder="Enter New Room Name"></div>
+                    <button id="create-room-submit-btn" title="Only one room can be created per user">Create & Join Room</button>
+                    <div id="new-room-id-display" class="hidden">ID: <strong></strong><button id="copy-room-id-btn" title="Copy ID"><i class="fas fa-copy"></i></button></div>
+                    <hr><div class="form-group"><label for="join-room-id">Join Room by ID</label><input type="text" id="join-room-id" placeholder="Paste Room ID here"></div>
+                     <button id="join-room-submit-btn">Join Room</button>
+                </div>
+                <div class="modal-footer">
+                    <button id="switch-global-btn" title="Go back to the main public chat">Switch to Global Chat</button>
+                    <button id="delete-room-btn" disabled title="Cannot delete Global Chat or rooms you didn't create">Delete Current Room</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Joined Rooms List Modal -->
+        <div class="modal-overlay" id="joined-rooms-modal">
+             <div class="modal-content">
+                 <div class="modal-header"><h3>Your Rooms</h3><button id="joined-rooms-close-btn" class="modal-close-btn" title="Close"><i class="fas fa-times"></i></button></div>
+                 <div class="modal-body">
+                     <ul id="joined-rooms-list" class="modal-list"><li>Loading rooms...</li></ul>
+                 </div>
+             </div>
+         </div>
+
+         <!-- Participants List Modal -->
+         <div class="modal-overlay" id="participants-modal">
+             <div class="modal-content">
+                 <div class="modal-header"><h3 id="participants-modal-title">Participants</h3><button id="participants-close-btn" class="modal-close-btn" title="Close"><i class="fas fa-times"></i></button></div>
+                 <div class="modal-body">
+                     <ul id="participants-list" class="modal-list"><li>Loading participants...</li></ul>
+                 </div>
+             </div>
+         </div>
+
+        <!-- Chat Screen -->
+        <div id="chat-container" class="hidden">
+            <div class="chat-header">
+                <div class="chat-header-left"><button id="profile-toggle-btn" title="Profile"><i class="fas fa-user-circle"></i></button><h2 id="chat-room-title" title="Click to see participants">Global Chat</h2></div>
+                <div class="chat-header-center"><button id="joined-rooms-btn" title="Your Rooms"><i class="fas fa-list-ul"></i></button><button id="join-room-btn" title="Join/Create Room"><i class="fas fa-plus-circle"></i></button></div>
+                <div class="chat-header-right"><div id="online-count">Online: 0</div></div>
+            </div>
+            <div id="messages"></div>
+            <form id="message-form"><textarea id="message-input" placeholder="Type message..." autocomplete="off" rows="1"></textarea><button type="submit" id="send-button" disabled><i class="fas fa-paper-plane"></i></button></form>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    import { getDatabase, ref, push, set, onValue, serverTimestamp, query, orderByChild, get, onDisconnect, remove, update, equalTo, limitToFirst } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+    // Firebase Config Object - Ready to use
+    const firebaseConfig = {
+        apiKey: "AIzaSyACNIvkx_529iNqvOmxmviPgnSST87_xVE",
+        authDomain: "chat-app-16c63.firebaseapp.com",
+        projectId: "chat-app-16c63",
+        storageBucket: "chat-app-16c63.appspot.com",
+        messagingSenderId: "445822991755",
+        appId: "1:445822991755:web:8f8e1ec3493ef84441c38e",
+        measurementId: "G-FCR0WPKQTX",
+        databaseURL: "https://chat-app-16c63-default-rtdb.firebaseio.com"
+     };
+
+    // ========================================================================
+    // CRITICAL: UPDATE FIREBASE RULES in Firebase Console. Use the example provided.
+    // ========================================================================
+
+    let appInstance, auth, db;
+    try { appInstance = initializeApp(firebaseConfig); auth = getAuth(appInstance); db = getDatabase(appInstance); console.log("Firebase Initialized."); }
+    catch (error) { console.error("Firebase Init Failed:", error); alert("Firebase Init Failed."); throw error; }
+
+    // --- DOM Elements ---
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const authContainer = document.getElementById('auth-container');
+    // Removed Set Username Modal Elements
+    const chatContainer = document.getElementById('chat-container');
+    const profileModalOverlay = document.getElementById('profile-modal-overlay');
+    const profileToggleBtn = document.getElementById('profile-toggle-btn');
+    const profileCloseBtn = document.getElementById('profile-close-btn');
+    const roomModalOverlay = document.getElementById('room-modal-overlay');
+    const joinRoomBtn = document.getElementById('join-room-btn');
+    const roomCloseBtn = document.getElementById('room-close-btn');
+    const createRoomNameInput = document.getElementById('create-room-name');
+    const joinRoomIdInput = document.getElementById('join-room-id');
+    const createRoomSubmitBtn = document.getElementById('create-room-submit-btn');
+    const joinRoomSubmitBtn = document.getElementById('join-room-submit-btn');
+    const newRoomIdDisplay = document.getElementById('new-room-id-display');
+    const newRoomIdValueSpan = newRoomIdDisplay?.querySelector('strong');
+    const copyRoomIdBtn = document.getElementById('copy-room-id-btn');
+    const deleteRoomBtn = document.getElementById('delete-room-btn');
+    const switchGlobalBtn = document.getElementById('switch-global-btn');
+    const joinedRoomsBtn = document.getElementById('joined-rooms-btn');
+    const joinedRoomsModal = document.getElementById('joined-rooms-modal');
+    const joinedRoomsCloseBtn = document.getElementById('joined-rooms-close-btn');
+    const joinedRoomsListUl = document.getElementById('joined-rooms-list');
+    const participantsModal = document.getElementById('participants-modal');
+    const participantsCloseBtn = document.getElementById('participants-close-btn');
+    const participantsListUl = document.getElementById('participants-list');
+    const participantsModalTitle = document.getElementById('participants-modal-title');
+    const chatRoomTitle = document.getElementById('chat-room-title');
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const loginEmailInput = document.getElementById('login-email');
+    const loginPasswordInput = document.getElementById('login-password');
+    const signupEmailInput = document.getElementById('signup-email');
+    const signupPasswordInput = document.getElementById('signup-password');
+    const authErrorDiv = document.getElementById('auth-error');
+    const authSuccessDiv = document.getElementById('auth-success');
+    const toggleButton = document.getElementById('toggle-button');
+    const toggleText = document.getElementById('toggle-text');
+    const authTitle = document.getElementById('auth-title');
+    const onlineCountSpan = document.getElementById('online-count');
+    const messagesDiv = document.getElementById('messages');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const profileUsernameSpan = document.getElementById('profile-username');
+    const profileEmailSpan = document.getElementById('profile-email');
+    const themeToggle = document.getElementById('theme-toggle');
+    const logoutBtn = document.getElementById('logout-btn');
+    const profileUsernameP = document.getElementById('profile-username-p'); // Get the <p> tag
+    const editUsernameBtn = document.querySelector('#profile-modal-content .edit-username-btn');
+    const usernameDisplaySpan = document.querySelector('#profile-modal-content .username-display span');
+    const usernameEditForm = document.querySelector('#profile-modal-content .username-edit-form');
+    const usernameEditInput = document.getElementById('username-edit-input');
+    const saveUsernameBtn = document.querySelector('#profile-modal-content .save-username-btn');
+    const usernameEditErrorDiv = document.getElementById('username-edit-error');
+    const usernameGuidancePlaceholder = document.getElementById('username-guidance-placeholder');
+
+    // --- State ---
+    let currentUser = null;
+    let currentUsername = "";
+    let currentRoomId = "main";
+    let currentRoomName = "Global Chat";
+    let messageListenerUnsubscribe = null;
+    let presenceListenerUnsubscribe = null;
+    let userPresenceRef = null;
+    let currentRoomCreatorUid = null;
+    let usernameHighlightTimeout = null; // Timeout for removing highlight
+
+    // --- Utility Functions ---
+    function showLoading(m = "Loading...") { if (loadingIndicator) { loadingIndicator.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${escapeHTML(m)}`; loadingIndicator.classList.remove('hidden'); } }
+    function hideLoading() { loadingIndicator?.classList.add('hidden'); }
+    function showAuthMessage(m, isError = true, targetDivId = null) {
+        let targetDiv = null;
+        if (targetDivId) {
+            targetDiv = document.getElementById(targetDivId);
+        } else {
+            targetDiv = isError ? authErrorDiv : authSuccessDiv;
+        }
+        // Special case for username edit error inside modal
+        if (targetDivId === 'username-edit-error') {
+            targetDiv = usernameEditErrorDiv;
+        }
+
+        if (!targetDiv) { console.warn("Target div not found:", targetDivId); return; }
+        hideAuthMessage(true);
+        let msg = m;
+        if (isError && typeof m !== 'string') {
+            const c = m.code || '';
+            if (c === "auth/invalid-email") msg = "Invalid email format.";
+            else if (c === "auth/weak-password") msg = "Password min 6 chars.";
+            else if (c === "auth/email-already-in-use") msg = "Email already registered.";
+            else if (["auth/user-not-found", "auth/wrong-password", "auth/invalid-credential"].includes(c)) msg = "Invalid email or password.";
+            else if (c === "auth/network-request-failed") msg = "Network error.";
+            else if (m.message?.includes("PERMISSION_DENIED")) msg = "DB permission denied.";
+            else if (m.message?.includes("username") && m.message?.includes("Invalid")) msg = "Invalid username chars (letters, numbers, _ only)."; // Specific username error
+            else if (m.message?.includes("empty")) msg = "Username cannot be empty."; // Specific username error
+            else msg = m.message || 'Unknown error.';
+        }
+        targetDiv.textContent = escapeHTML(msg);
+        targetDiv.style.display = 'block';
+    }
+    function hideAuthMessage(all = false) {
+        if (authErrorDiv) authErrorDiv.style.display = 'none';
+        if (authSuccessDiv) authSuccessDiv.style.display = 'none';
+        if (usernameEditErrorDiv) usernameEditErrorDiv.style.display = 'none'; // Hide username error too
+    }
+    function toggleAuthForms(showLogin = false) { hideAuthMessage(true); loginForm.reset(); signupForm.reset(); if (showLogin || signupForm.style.display === 'flex') { loginForm.style.display = 'flex'; signupForm.style.display = 'none'; authTitle.textContent = 'Welcome Back!'; toggleText.textContent = "No account?"; toggleButton.textContent = 'Sign Up'; } else { loginForm.style.display = 'none'; signupForm.style.display = 'flex'; authTitle.textContent = 'Create Account'; toggleText.textContent = 'Have account?'; toggleButton.textContent = 'Login'; } }
+    function formatTimestamp(t) { try { const d = new Date(t); return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } }
+    function scrollToBottom() { if (messagesDiv) requestAnimationFrame(() => { messagesDiv.scrollTop = messagesDiv.scrollHeight; }); }
+    function escapeHTML(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+    function linkify(t) { const r = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig; return escapeHTML(t).replace(r, u => `<a href="${u}" target="_blank" rel="noopener noreferrer">${escapeHTML(u)}</a>`); }
+    function adjustTextareaHeight() { if (!messageInput) return; const p = messageInput.style.height; messageInput.style.height = 'auto'; const s = messageInput.scrollHeight, m = 100; messageInput.style.height = Math.max(45, Math.min(s, m)) + 'px'; if (messageInput.style.height !== p && messagesDiv) { const i = messagesDiv.scrollHeight - messagesDiv.clientHeight <= messagesDiv.scrollTop + 100; if (i) scrollToBottom(); } }
+    function generateRoomId() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
+
+    // --- Theme ---
+    function applyTheme(i) { document.body.classList.toggle('dark-theme', i); if (themeToggle) themeToggle.checked = i; }
+    function toggleTheme() { const i = document.body.classList.toggle('dark-theme'); localStorage.setItem('chatTheme', i ? 'dark' : 'light'); if (themeToggle) themeToggle.checked = i; }
+    applyTheme(localStorage.getItem('chatTheme') === 'dark');
+    if (themeToggle) themeToggle.addEventListener('change', toggleTheme);
+
+    // --- Presence ---
+    const presenceRef = ref(db, 'presence');
+    function setupPresence(uid) { if (!uid || presenceListenerUnsubscribe) return; userPresenceRef = ref(db, 'presence/' + uid); const cRef = ref(db, '.info/connected'); const pDisc = onDisconnect(userPresenceRef); onValue(cRef, s => { if (s.val() === true) { set(userPresenceRef, true).catch(e => console.warn("PSetFail:", e)); pDisc.remove().catch(e => console.warn("PDiscFail:", e)); } }, e => console.error("ConnErr:", e)); presenceListenerUnsubscribe = onValue(presenceRef, s => { onlineCountSpan.textContent = `Online: ${s.exists() ? s.size : 0}`; }, e => { console.error("PLisFail:", e); onlineCountSpan.textContent = `Online: Err`; }); }
+    function cleanupPresence() { if (presenceListenerUnsubscribe) { presenceListenerUnsubscribe(); presenceListenerUnsubscribe = null; } if (userPresenceRef) { onDisconnect(userPresenceRef).cancel().catch(e => console.warn("PCancelFail:", e)); remove(userPresenceRef).catch(e => console.warn("PRemFail:", e)); userPresenceRef = null; } }
+
+    // --- Modals ---
+    function openModal(o) { o?.classList.add('open'); }
+    function closeModal(o) {
+        o?.classList.remove('open');
+        // Clean up username guidance message and highlight when profile modal closes
+        if (o === profileModalOverlay) {
+             if (usernameGuidancePlaceholder) usernameGuidancePlaceholder.innerHTML = '';
+             if (profileUsernameP) profileUsernameP.classList.remove('highlight-username');
+             if (usernameHighlightTimeout) clearTimeout(usernameHighlightTimeout);
+             usernameHighlightTimeout = null;
+             // Ensure edit form is hidden if user closes without saving
+             if (usernameEditForm.style.display === 'flex' && usernameDisplaySpan) {
+                 usernameDisplaySpan.parentElement.style.display = 'flex';
+                 usernameEditForm.style.display = 'none';
+                 hideAuthMessage(true); // Clear any errors shown in edit form
+             }
+        }
+         // Clean up room ID display when room modal closes
+        if (o === roomModalOverlay) {
+             newRoomIdDisplay?.classList.add('hidden');
+        }
+    }
+    function updateProfileModalContent() {
+        if (!currentUser) return;
+        usernameDisplaySpan.parentElement.style.display = 'flex';
+        usernameEditForm.style.display = 'none';
+        usernameEditErrorDiv.style.display = 'none';
+        usernameEditInput.value = '';
+        profileEmailSpan.textContent = currentUser.email || "N/A";
+        get(ref(db, 'users/' + currentUser.uid)).then(s => {
+            currentUsername = (s.exists() && s.val().username) ? s.val().username : "Anonymous";
+            profileUsernameSpan.textContent = currentUsername;
+        }).catch(e => {
+            console.error("PFetchFail:", e);
+            profileUsernameSpan.textContent = "Error";
+        });
+    }
+
+    function saveUsername(usernameToSave) {
+        return new Promise(async (resolve, reject) => {
+            if (!currentUser || !usernameToSave) return reject(new Error("Invalid user or username"));
+            const n = usernameToSave.trim();
+            if (!n) {
+                showAuthMessage("Username cannot be empty", true, 'username-edit-error');
+                return reject(new Error("Username cannot be empty"));
+            }
+            // Relaxed regex: Allow letters, numbers, underscore, hyphen, space
+            // if (!/^[a-zA-Z0-9_]+$/.test(n)) {
+            //     showAuthMessage("Invalid chars in username", true, 'username-edit-error');
+            //     return reject(new Error("Invalid chars in username"));
+            // }
+            if (!/^[a-zA-Z0-9_ -]+$/.test(n)) { // Allow space and hyphen
+                showAuthMessage("Invalid chars. Use letters, numbers, _, -, space.", true, 'username-edit-error');
+                return reject(new Error("Invalid chars in username"));
+            }
+             if (n.length > 20) { // Add length limit
+                showAuthMessage("Username max 20 characters.", true, 'username-edit-error');
+                return reject(new Error("Username too long"));
+            }
+            if (n === "Anonymous") {
+                showAuthMessage("Cannot set username to 'Anonymous'", true, 'username-edit-error');
+                return reject(new Error("Cannot set username to 'Anonymous'"));
+            }
+            if (n === currentUsername) { // No change needed
+                usernameDisplaySpan.parentElement.style.display = 'flex';
+                usernameEditForm.style.display = 'none';
+                hideAuthMessage(true);
+                return resolve();
+            }
+
+            console.log(`Attempting to save username: ${n}`);
+            showLoading("Saving username...");
+            try {
+                await update(ref(db, `users/${currentUser.uid}`), { username: n });
+                currentUsername = n; // Update local state immediately
+                if (profileUsernameSpan) profileUsernameSpan.textContent = currentUsername;
+                if (usernameDisplaySpan && usernameEditForm) {
+                    usernameDisplaySpan.parentElement.style.display = 'flex';
+                    usernameEditForm.style.display = 'none';
+                }
+                hideAuthMessage(true); // Clear any previous error
+                console.log("Username saved successfully:", currentUsername);
+                resolve();
+            } catch (e) {
+                console.error("USaveFail:", e);
+                showAuthMessage(e.code === "PERMISSION_DENIED" ? "Permission Denied." : "Failed to save username.", true, 'username-edit-error');
+                reject(e);
+            } finally {
+                 hideLoading();
+                 // Remove highlight if still present
+                 if (profileUsernameP) profileUsernameP.classList.remove('highlight-username');
+                 if (usernameHighlightTimeout) clearTimeout(usernameHighlightTimeout);
+                 usernameHighlightTimeout = null;
+                 // Remove guidance message
+                  if (usernameGuidancePlaceholder) usernameGuidancePlaceholder.innerHTML = '';
+            }
+        });
+    }
+
+    // Function to redirect user to profile for username setting
+    function redirectToProfileForUsername() {
+        console.log("Redirecting to profile to set username.");
+        updateProfileModalContent(); // Ensure content is fresh
+        openModal(profileModalOverlay);
+
+        // Add guidance message
+        if (usernameGuidancePlaceholder) {
+            usernameGuidancePlaceholder.innerHTML = `<div class="username-guidance-message">Please set your username to send messages.</div>`;
+        }
+
+        // Trigger edit mode
+        if (editUsernameBtn) {
+            editUsernameBtn.click(); // Simulate click to show edit form
+        }
+        // Focus input
+        if (usernameEditInput) {
+            usernameEditInput.focus();
+        }
+
+        // Highlight the username section
+        if (profileUsernameP) {
+             if (usernameHighlightTimeout) clearTimeout(usernameHighlightTimeout); // Clear existing timeout
+             profileUsernameP.classList.add('highlight-username');
+             // Remove highlight after a delay
+             usernameHighlightTimeout = setTimeout(() => {
+                 profileUsernameP.classList.remove('highlight-username');
+                 usernameHighlightTimeout = null;
+             }, 3000); // Highlight for 3 seconds
+        }
+    }
+
+    // --- Room Management ---
+    async function switchToRoom(newRoomId, forceReload = false) {
+        if (!newRoomId || !currentUser) return; newRoomId = newRoomId.trim();
+        if (!forceReload && newRoomId === currentRoomId && chatContainer.style.display !== 'none') { closeModal(roomModalOverlay); closeModal(joinedRoomsModal); return; }
+        showLoading(`Joining ${newRoomId === 'main' ? 'Global' : newRoomId}...`); console.log(`Switching to: ${newRoomId}`);
+        if (messageListenerUnsubscribe) { messageListenerUnsubscribe(); messageListenerUnsubscribe = null; console.log("Unsubscribed from old messages."); }
+        currentRoomId = newRoomId; messagesDiv.innerHTML = ''; currentRoomName = "Loading..."; currentRoomCreatorUid = null; chatRoomTitle.textContent = currentRoomName;
+        if (currentRoomId === "main") {
+            currentRoomName = "Global Chat"; currentRoomCreatorUid = null; chatRoomTitle.textContent = currentRoomName;
+        } else {
+            try {
+                const metaRef = ref(db, `rooms/${currentRoomId}/metadata`); const s = await get(metaRef);
+                if (s.exists()) { const meta = s.val(); currentRoomName = meta.name || currentRoomId; currentRoomCreatorUid = meta.creatorUid; }
+                else { console.warn(`Meta missing for ${currentRoomId}.`); currentRoomName = currentRoomId; }
+            } catch (e) { console.error(`Meta fetch fail (${currentRoomId}):`, e); currentRoomName = currentRoomId; if (e.code === "PERMISSION_DENIED") alert("Perm denied for room meta."); }
+            chatRoomTitle.textContent = escapeHTML(currentRoomName);
+        }
+        messageInput.disabled = false; sendButton.disabled = messageInput.value.trim() === '';
+        updateDeleteButtonStatus(); loadMessages(); closeModal(roomModalOverlay); closeModal(joinedRoomsModal); hideLoading();
+    }
+    async function checkIfUserCreatedRoom(userId) { if (!userId) return false; const roomsRef = ref(db, 'rooms'); const userRoomsQuery = query(roomsRef, orderByChild('metadata/creatorUid'), equalTo(userId), limitToFirst(1)); try { const s = await get(userRoomsQuery); return s.exists(); } catch (e) { console.error("Error checking created rooms:", e); return false; } }
+    async function createRoom() {
+        if (!currentUser || !currentUsername) { alert("Please log in."); return; }
+        // **Username check before creating room**
+        if (currentUsername === "Anonymous") {
+            redirectToProfileForUsername(); // Guide user to set username first
+            return;
+        }
+        const roomName = createRoomNameInput.value.trim(); if (!roomName) { alert("Enter room name."); return; }
+        showLoading("Checking room limit..."); const alreadyCreated = await checkIfUserCreatedRoom(currentUser.uid); if (alreadyCreated) { alert("You can only create one room at a time."); hideLoading(); return; } hideLoading();
+        const newId = generateRoomId(); const now = serverTimestamp(); const metadata = { name: roomName, creatorUid: currentUser.uid, createdAt: now }; const participantData = { username: currentUsername, joinedAt: now }; const joinedRoomData = { name: roomName, creatorUid: currentUser.uid, joinedAt: now }; const metadataRef = ref(db, `rooms/${newId}/metadata`); const participantRef = ref(db, `rooms/${newId}/participants/${currentUser.uid}`); const userJoinedRef = ref(db, `users/${currentUser.uid}/joinedRooms/${newId}`); showLoading("Creating...");
+        try { await set(metadataRef, metadata); await set(participantRef, participantData); await set(userJoinedRef, joinedRoomData); console.log(`Room ${newId} created: "${roomName}"`); if (newRoomIdValueSpan) newRoomIdValueSpan.textContent = newId; newRoomIdDisplay?.classList.remove('hidden'); createRoomNameInput.value = ''; alert(`Room "${roomName}" created! ID: ${newId}\nShare this ID.`); await switchToRoom(newId, true); }
+        catch (e) { console.error("Room create fail:", e); alert(`Create fail: ${e.message}. Check Firebase rules.`); } finally { hideLoading(); }
+    }
+    function updateDeleteButtonStatus() { if (!deleteRoomBtn) return; const canDel = currentRoomId !== "main" && !!currentRoomCreatorUid && currentUser?.uid === currentRoomCreatorUid; deleteRoomBtn.disabled = !canDel; deleteRoomBtn.title = canDel ? `Delete Room "${currentRoomName}"` : "Cannot delete"; }
+    async function deleteCurrentRoom() { if (currentRoomId === "main" || !currentUser || currentUser.uid !== currentRoomCreatorUid) { alert("Cannot delete."); return; } if (!confirm(`Delete Room "${currentRoomName}" (${currentRoomId}) permanently?`)) return; showLoading(`Deleting ${currentRoomId}...`); const roomRef = ref(db, `rooms/${currentRoomId}`); const userJoinedRef = ref(db, `users/${currentUser.uid}/joinedRooms/${currentRoomId}`); try { await remove(roomRef); await remove(userJoinedRef); console.log(`Room ${currentRoomId} deleted.`); alert(`Room "${currentRoomName}" deleted.`); await switchToRoom("main", true); } catch (e) { console.error(`Del fail ${currentRoomId}:`, e); alert(`Delete fail: ${e.message}`); } finally { hideLoading(); closeModal(roomModalOverlay); } }
+    function copyRoomIdToClipboard() { const id = newRoomIdValueSpan?.textContent; if (id && navigator.clipboard) { navigator.clipboard.writeText(id).then(() => alert(`ID "${id}" copied!`)).catch(e => { console.error('Copy fail:', e); alert("Copy fail."); }); } else if (id) { alert("ID: " + id); } }
+    async function joinRoomById() {
+        if (!currentUser || !currentUsername) { alert("Please log in first."); return; }
+        // **Username check before joining room**
+        if (currentUsername === "Anonymous") {
+            redirectToProfileForUsername();
+            return;
+        }
+        const roomIdToJoin = joinRoomIdInput.value.trim().toUpperCase(); if (!roomIdToJoin) { alert("Please enter a Room ID."); return; } if (roomIdToJoin === currentRoomId) { closeModal(roomModalOverlay); return; }
+        showLoading(`Checking room ${roomIdToJoin}...`); const roomMetaRef = ref(db, `rooms/${roomIdToJoin}/metadata`);
+        try {
+            const snapshot = await get(roomMetaRef); if (!snapshot.exists()) { alert(`Room "${roomIdToJoin}" not found.`); hideLoading(); return; }
+            const roomName = snapshot.val().name || roomIdToJoin; const creatorUid = snapshot.val().creatorUid; const participantRef = ref(db, `rooms/${roomIdToJoin}/participants/${currentUser.uid}`); const userJoinedRef = ref(db, `users/${currentUser.uid}/joinedRooms/${roomIdToJoin}`); const participantData = { username: currentUsername, joinedAt: serverTimestamp() }; const joinedData = { name: roomName, creatorUid: creatorUid, joinedAt: serverTimestamp() }; await set(participantRef, participantData); await set(userJoinedRef, joinedData); console.log(`Successfully joined room ${roomIdToJoin}`); await switchToRoom(roomIdToJoin, true);
+        } catch (error) { console.error(`Failed join room ${roomIdToJoin}:`, error); alert(`Join fail: ${error.message}. Check rules.`); hideLoading(); }
+    }
+    async function leaveRoom(roomIdToLeave) {
+        if (!currentUser || roomIdToLeave === 'main') return; const roomName = await getRoomName(roomIdToLeave); if (!confirm(`Leave room "${roomName || roomIdToLeave}"?`)) return;
+        showLoading(`Leaving room ${roomIdToLeave}...`); const participantRef = ref(db, `rooms/${roomIdToLeave}/participants/${currentUser.uid}`); const userJoinedRef = ref(db, `users/${currentUser.uid}/joinedRooms/${roomIdToLeave}`);
+        try { await remove(participantRef); await remove(userJoinedRef); console.log(`Left room ${roomIdToLeave}`); if (currentRoomId === roomIdToLeave) { await switchToRoom("main", true); } else { closeModal(joinedRoomsModal); hideLoading(); if (joinedRoomsModal.classList.contains('open')) { const snapshot = await get(query(ref(db, `users/${currentUser.uid}/joinedRooms`), orderByChild('joinedAt'))); populateJoinedRoomsList(snapshot); } } }
+        catch (error) { console.error(`Leave fail ${roomIdToLeave}:`, error); alert(`Leave fail: ${error.message}`); hideLoading(); }
+    }
+    async function getRoomName(roomId) { if (roomId === 'main') return "Global Chat"; try { const s = await get(ref(db, `rooms/${roomId}/metadata/name`)); return s.exists() ? s.val() : roomId; } catch (e) { return roomId; } }
+
+    // --- Auth State Change Handler ---
+    showLoading("Initializing...");
+    onAuthStateChanged(auth, async (user) => {
+        console.log("Auth state changed. User:", user?.uid || "null");
+        closeModal(profileModalOverlay); closeModal(roomModalOverlay); closeModal(joinedRoomsModal); closeModal(participantsModal); // Removed closeModal for set-username
+        if (messageListenerUnsubscribe) { messageListenerUnsubscribe(); messageListenerUnsubscribe = null; }
+        cleanupPresence();
+        hideAuthMessage(true);
+
+        if (user) {
+            currentUser = user;
+            await finalizeLogin(user);
+        } else { // User logged out
+            currentUser = null; currentUsername = ""; currentRoomId = "main"; currentRoomName = "Global Chat"; currentRoomCreatorUid = null;
+            authContainer.style.display = 'flex'; authContainer.classList.remove('hidden');
+            chatContainer.classList.add('hidden'); chatContainer.style.display = 'none';
+            messageInput.disabled = true; sendButton.disabled = true; if (messagesDiv) messagesDiv.innerHTML = ''; if (onlineCountSpan) onlineCountSpan.textContent = 'Online: 0'; if (chatRoomTitle) chatRoomTitle.textContent = "Global Chat";
+            toggleAuthForms(true); hideLoading();
+        }
+    }, (e) => { console.error("Auth observer error:", e); showAuthMessage("Auth error:" + e.message, true); currentUser = null; currentUsername = ""; cleanupPresence(); hideLoading(); authContainer.classList.remove('hidden'); authContainer.style.display = 'flex'; chatContainer.classList.add('hidden'); chatContainer.style.display = 'none'; });
+
+    // ** Simplified finalizeLogin **
+    async function finalizeLogin(user) {
+         showLoading("Authenticating...");
+         try {
+            const userRef = ref(db, 'users/' + user.uid); const s = await get(userRef);
+            currentUsername = (s.exists() && s.val().username) ? s.val().username : "Anonymous";
+            console.log("User authenticated. Fetched/Default username:", currentUsername);
+
+            if (!s.exists()) {
+                 console.warn(`Profile missing for ${user.uid}, creating with default.`);
+                 currentUsername = "Anonymous"; // Ensure local state is default if creating
+                 await set(userRef, { username: currentUsername, email: user.email, createdAt: serverTimestamp() }).catch(e => console.error("Profile set fail:", e));
+             } else if (!s.val().username) { // If profile exists but username is missing/falsy
+                  console.warn(`Username missing for ${user.uid}, ensuring 'Anonymous' in DB.`);
+                  currentUsername = "Anonymous";
+                  await update(userRef, { username: "Anonymous" }).catch(e => console.error("Default username update fail:", e));
+             }
+
+            setupPresence(user.uid);
+            await switchToRoom("main", true); // Always load main room first
+            authContainer.style.display = 'none'; authContainer.classList.add('hidden');
+            chatContainer.classList.remove('hidden'); chatContainer.style.display = 'flex';
+            messageInput.disabled = false; sendButton.disabled = messageInput.value.trim() === ''; adjustTextareaHeight();
+
+        } catch (e) { console.error("User init error:", e); showAuthMessage(e, true); messageInput.disabled=true; sendButton.disabled=true; chatContainer.classList.add('hidden'); chatContainer.style.display='none'; authContainer.classList.remove('hidden'); authContainer.style.display='flex'; if (auth.currentUser) { signOut(auth); } }
+        finally { hideLoading(); }
+    }
+
+    // --- Event Listeners ---
+    loginForm?.addEventListener('submit', e => { e.preventDefault(); showLoading("Logging in..."); hideAuthMessage(true); const em = loginEmailInput.value.trim(); const pw = loginPasswordInput.value; if (!em || !pw) { showAuthMessage("Enter email/password.", true, 'auth-error'); hideLoading(); return; } signInWithEmailAndPassword(auth, em, pw).catch(e => { console.error("Login fail:", e); showAuthMessage(e, true, 'auth-error'); hideLoading(); }); });
+    signupForm?.addEventListener('submit', e => {
+        e.preventDefault(); showLoading("Signing up..."); hideAuthMessage(true);
+        const em = signupEmailInput.value.trim(); const pw = signupPasswordInput.value;
+        if (!em) { showAuthMessage("Enter email.", true, 'auth-error'); hideLoading(); return; }
+        if (pw.length < 6) { showAuthMessage("Password min 6 chars.", true, 'auth-error'); hideLoading(); return; }
+        createUserWithEmailAndPassword(auth, em, pw)
+            .then(async (userCredential) => {
+                const newUser = userCredential.user; const userRef = ref(db, 'users/' + newUser.uid); console.log("Account created, saving profile with default username:", newUser.uid);
+                const defaultUsername = "Anonymous";
+                try { await set(userRef, { username: defaultUsername, email: em, createdAt: serverTimestamp() }); console.log("Default profile saved."); }
+                catch (profileError) { console.error("Default profile save failed:", profileError); showAuthMessage(profileError, true, 'auth-error'); await newUser.delete().catch(delE => console.error("Orphan delete fail:", delE)); throw profileError; }
+                finally { hideLoading(); } // onAuthStateChanged handles UI
+            }).catch(e => { console.error("Signup fail:", e); showAuthMessage(e, true, 'auth-error'); hideLoading(); });
+    });
+    // REMOVED Set Username Form handler
+
+    logoutBtn?.addEventListener('click', () => { closeModal(profileModalOverlay); if (userPresenceRef) remove(userPresenceRef).catch(e => console.warn("Logout presence rem fail:", e)); showLoading("Logging out..."); signOut(auth).catch(e => { console.error("Logout fail:", e); showAuthMessage(e, true); hideLoading(); }); });
+    toggleButton?.addEventListener('click', () => toggleAuthForms());
+    profileToggleBtn?.addEventListener('click', e => { e.stopPropagation(); updateProfileModalContent(); openModal(profileModalOverlay); });
+    profileCloseBtn?.addEventListener('click', () => closeModal(profileModalOverlay));
+    profileModalOverlay?.addEventListener('click', e => { if (e.target === profileModalOverlay) closeModal(profileModalOverlay); });
+    editUsernameBtn?.addEventListener('click', () => { usernameEditInput.value = currentUsername === "Anonymous" ? "" : currentUsername; usernameDisplaySpan.parentElement.style.display = 'none'; usernameEditForm.style.display = 'flex'; usernameEditInput.focus(); usernameEditErrorDiv.style.display = 'none'; });
+    saveUsernameBtn?.addEventListener('click', () => { saveUsername(usernameEditInput.value).catch(() => {}); }); // Error shown by saveUsername
+    usernameEditInput?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveUsernameBtn.click(); } else if (e.key === 'Escape') { usernameDisplaySpan.parentElement.style.display = 'flex'; usernameEditForm.style.display = 'none'; usernameEditErrorDiv.style.display = 'none'; } });
+    joinRoomBtn?.addEventListener('click', e => { e.stopPropagation(); /* Keep ID visible: newRoomIdDisplay?.classList.add('hidden'); */ joinRoomIdInput.value = ''; createRoomNameInput.value = ''; updateDeleteButtonStatus(); openModal(roomModalOverlay); });
+    roomCloseBtn?.addEventListener('click', () => closeModal(roomModalOverlay));
+    roomModalOverlay?.addEventListener('click', e => { if (e.target === roomModalOverlay) closeModal(roomModalOverlay); });
+    createRoomSubmitBtn?.addEventListener('click', createRoom);
+    joinRoomSubmitBtn?.addEventListener('click', joinRoomById);
+    switchGlobalBtn?.addEventListener('click', () => switchToRoom("main", true));
+    deleteRoomBtn?.addEventListener('click', deleteCurrentRoom);
+    copyRoomIdBtn?.addEventListener('click', copyRoomIdToClipboard);
+    joinedRoomsBtn?.addEventListener('click', async e => { e.stopPropagation(); if (!currentUser) return; showLoading("Loading rooms..."); openModal(joinedRoomsModal); try { const snapshot = await get(query(ref(db, `users/${currentUser.uid}/joinedRooms`), orderByChild('joinedAt'))); populateJoinedRoomsList(snapshot); } catch (error) { console.error("Failed load joined rooms:", error); joinedRoomsListUl.innerHTML = `<li>Error: ${error.message}</li>`; } finally { hideLoading(); } });
+    joinedRoomsCloseBtn?.addEventListener('click', () => closeModal(joinedRoomsModal));
+    joinedRoomsModal?.addEventListener('click', e => { if (e.target === joinedRoomsModal) closeModal(joinedRoomsModal); });
+    chatRoomTitle?.addEventListener('click', () => { if (currentRoomId !== 'main') { showParticipants(); } });
+    participantsCloseBtn?.addEventListener('click', () => closeModal(participantsModal));
+    participantsModal?.addEventListener('click', e => { if (e.target === participantsModal) closeModal(participantsModal); });
+    // REMOVED Set Username Modal listeners
+
+
+    // --- Populate Joined Rooms List ---
+    function populateJoinedRoomsList(snapshot) {
+        if (!joinedRoomsListUl) return; joinedRoomsListUl.innerHTML = '';
+        const globalLi = document.createElement('li'); globalLi.innerHTML = `<span class="item-name">Global Chat</span>`; globalLi.addEventListener('click', () => switchToRoom("main", true)); joinedRoomsListUl.appendChild(globalLi);
+        if (!snapshot.exists()) { joinedRoomsListUl.innerHTML += '<li style="cursor:default; justify-content: center; opacity: 0.7;">No custom rooms joined.</li>'; return; }
+        snapshot.forEach(childSnapshot => {
+            const roomId = childSnapshot.key; const roomData = childSnapshot.val(); if (!roomData || !roomId) return;
+            const li = document.createElement('li'); li.dataset.roomId = roomId;
+            const nameSpan = document.createElement('span'); nameSpan.className = 'item-name'; nameSpan.textContent = roomData.name || roomId; li.appendChild(nameSpan);
+            const idSpan = document.createElement('span'); idSpan.className = 'item-id'; idSpan.textContent = `(${roomId})`; li.appendChild(idSpan);
+            li.addEventListener('click', (e) => { if (!e.target.closest('.leave-room-btn')) { switchToRoom(roomId, true); } });
+            if (currentUser && roomData.creatorUid !== currentUser.uid) { const leaveButton = document.createElement('button'); leaveButton.className = 'leave-room-btn'; leaveButton.title = `Leave room "${roomData.name || roomId}"`; leaveButton.innerHTML = '<i class="fas fa-sign-out-alt"></i>'; leaveButton.addEventListener('click', (e) => { e.stopPropagation(); leaveRoom(roomId); }); li.appendChild(leaveButton); }
+            joinedRoomsListUl.appendChild(li);
+        });
+    }
+
+    // --- Show Participants ---
+    async function showParticipants() {
+        if (!participantsListUl || !currentUser || currentRoomId === 'main') return;
+        participantsModalTitle.textContent = `Participants in ${escapeHTML(currentRoomName)}`; participantsListUl.innerHTML = '<li>Loading...</li>'; openModal(participantsModal);
+        const participantsRef = ref(db, `rooms/${currentRoomId}/participants`);
+        try { const snapshot = await get(query(participantsRef, orderByChild('username'))); participantsListUl.innerHTML = ''; if (!snapshot.exists()) { participantsListUl.innerHTML = '<li>Just you!</li>'; return; } snapshot.forEach(childSnapshot => { const d = childSnapshot.val(); const li = document.createElement('li'); li.textContent = d.username || 'Unknown User'; participantsListUl.appendChild(li); }); }
+        catch(error) { console.error("Failed load participants:", error); participantsListUl.innerHTML = '<li>Error loading.</li>'; }
+    }
+
+    // --- Messages ---
+    function getMessagesRef() { return ref(db, `rooms/${currentRoomId}/messages`); }
+    function sendMessage() {
+        if (!currentUser) { console.error("Cannot send: No user."); return; }
+        // ** Check username here and redirect if 'Anonymous' **
+        if (!currentUsername || currentUsername === "Anonymous") {
+             console.log("Username is Anonymous, redirecting to profile.");
+             redirectToProfileForUsername(); // Redirect user to profile settings
+             return; // Stop message sending
+        }
+        if (!messageInput) { console.error("Cannot send message: Input element missing"); return; }
+        const txt = messageInput.value.trim(); if (txt === '') return; const tmp = messageInput.value; sendButton.disabled = true; messageInput.disabled = true; console.log(`Sending message: User=${currentUser.uid}, Name=${currentUsername}, Room=${currentRoomId}, Text=${txt}`); push(getMessagesRef(), { userId: currentUser.uid, username: currentUsername, text: txt, timestamp: serverTimestamp() }).then(() => { messageInput.value = ''; adjustTextareaHeight(); }).catch(e => { console.error("Send fail:", e); alert("Send fail. Check rules/conn."); messageInput.value = tmp; }).finally(() => { if (currentUser) { messageInput.disabled = false; sendButton.disabled = messageInput.value.trim() === ''; messageInput.focus(); adjustTextareaHeight(); } });
+    }
+    messageForm?.addEventListener('submit', e => { e.preventDefault(); sendMessage(); });
+    messageInput?.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+    messageInput?.addEventListener('input', () => { adjustTextareaHeight(); sendButton.disabled = !currentUser || messageInput.value.trim() === ''; });
+    messageInput?.addEventListener('focus', adjustTextareaHeight);
+
+    function loadMessages() {
+        if (!messagesDiv || !currentRoomId) { console.warn("Cannot load messages, invalid room or div."); return; }
+        const currentMessagesRef = query(getMessagesRef(), orderByChild('timestamp'));
+        console.log(`Attaching message listener for: ${currentRoomId} (${currentRoomName})`); let initialLoad = true;
+        if (messageListenerUnsubscribe) { console.log("Detaching previous message listener."); messageListenerUnsubscribe(); messageListenerUnsubscribe = null; }
+        messageListenerUnsubscribe = onValue(currentMessagesRef, (s) => { console.log(`Message data received for ${currentRoomId}`); const h = []; let c = 0; if (s.exists()) { s.forEach((ch) => { const d = ch.val(); const k = ch.key; if (d?.text && d.timestamp && d.userId && k) { h.push(createMessageHTML(d, k)); c++; } else console.warn("Invalid msg:", k, d); }); } messagesDiv.innerHTML = c === 0 ? `<p style="text-align:center; color:var(--input-border-color); padding:20px;">No messages in ${escapeHTML(currentRoomName)}.</p>` : h.join(''); const i = messagesDiv.scrollHeight - messagesDiv.clientHeight <= messagesDiv.scrollTop + 150; if (initialLoad || i) scrollToBottom(); initialLoad = false; }, (e) => { console.error(`Msg load fail (${currentRoomId}):`, e); messagesDiv.innerHTML = `<p style="text-align:center; color:var(--error-color); padding:20px;">Cannot load messages (${e.code || 'Err'}). Check rules.</p>`; if (messageListenerUnsubscribe) { messageListenerUnsubscribe(); messageListenerUnsubscribe = null; } if (e.code === "PERMISSION_DENIED") alert("Cannot load messages - permissions."); });
+    }
+
+    function createMessageHTML(d, k) { const isS = d.userId === currentUser?.uid; const cl = isS ? 'sent' : 'received'; const u = isS ? 'You' : (d.username ? escapeHTML(d.username) : "Anon"); const txt = linkify(d.text); const time = formatTimestamp(d.timestamp); const ed = d.edited ? '<span class="edited-indicator">(edited)</span>' : ''; const act = isS ? `<div class="message-actions"><button class="edit-msg-btn" title="Edit"><i class="fas fa-pencil-alt"></i></button><button class="delete-msg-btn" title="Delete"><i class="fas fa-trash-alt"></i></button></div>` : ''; return `<div class="message ${cl}" data-message-id="${k}">${act}<div class="message-content">${!isS ? `<div class="user">${u}</div>` : ''}<div class="text">${txt}</div><div class="timestamp">${time}${ed}</div></div></div>`; }
+
+    // --- Message Edit/Delete ---
+    messagesDiv?.addEventListener('click', (e) => { if (!currentUser) return; const edBtn = e.target.closest('.edit-msg-btn'); const delBtn = e.target.closest('.delete-msg-btn'); const msgEl = e.target.closest('.message'); const msgId = msgEl?.dataset.messageId; if (!msgId) return; if (edBtn) handleEditMessage(msgId, msgEl); else if (delBtn) handleDeleteMessage(msgId); });
+    function handleEditMessage(msgId, msgEl) { const contDiv = msgEl.querySelector('.message-content'); const txtEl = msgEl.querySelector('.text'); if (!contDiv || !txtEl || msgEl.querySelector('.message-edit-form')) return; const messageRef = ref(db, `rooms/${currentRoomId}/messages/${msgId}/text`); get(messageRef).then(s => { if (!s.exists()) { alert("Msg text not found."); return; } const origTxt = s.val(); contDiv.style.display = 'none'; const edForm = document.createElement('div'); edForm.className = 'message-edit-form'; edForm.innerHTML = `<input type="text" value="${escapeHTML(origTxt)}"><button class="save-edit-btn">Save</button><button class="cancel-edit-btn">Cancel</button>`; msgEl.appendChild(edForm); const inp = edForm.querySelector('input'); inp?.focus(); edForm.querySelector('.save-edit-btn')?.addEventListener('click', () => { const newTxt = inp.value.trim(); if (newTxt && newTxt !== origTxt) { saveMessageEdit(msgId, newTxt, msgEl, edForm, contDiv); } else if (newTxt === origTxt) { contDiv.style.display = 'flex'; edForm.remove(); } else { alert("Empty."); } }); edForm.querySelector('.cancel-edit-btn')?.addEventListener('click', () => { contDiv.style.display = 'flex'; edForm.remove(); }); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); edForm.querySelector('.save-edit-btn')?.click(); } else if (e.key === 'Escape') { edForm.querySelector('.cancel-edit-btn')?.click(); } }); }).catch(e => { console.error("Fetch edit text fail:", e); alert("Load fail."); }); }
+    function saveMessageEdit(msgId, newTxt, msgEl, edForm, contDiv) { showLoading("Saving..."); update(ref(db, `rooms/${currentRoomId}/messages/${msgId}`), { text: newTxt, edited: true, editedTimestamp: serverTimestamp() }).then(() => { console.log("Edit saved"); contDiv.style.display = 'flex'; edForm.remove(); }).catch(e => { console.error("Edit fail:", e); alert("Save fail."); }).finally(hideLoading); }
+    function handleDeleteMessage(msgId) { if (confirm("Delete message?")) { showLoading("Deleting..."); remove(ref(db, `rooms/${currentRoomId}/messages/${msgId}`)).then(() => console.log("Msg deleted")).catch(e => { console.error("Delete fail:", e); alert("Delete fail."); }).finally(hideLoading); } }
+
+</script>
+</body>
+</html>
